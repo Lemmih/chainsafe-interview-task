@@ -1,11 +1,16 @@
 use anyhow::Result;
+use ethers::solc::{Project, ProjectPathsConfig};
 use ethers::{prelude::*, utils::Ganache};
-use ethers_solc::{Project, ProjectPathsConfig};
-use std::{convert::TryFrom, path::PathBuf, sync::Arc, time::Duration};
-
 use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
-use std::fs::File;
+use std::{path::PathBuf, sync::Arc, time::Duration};
 
+// Upload a file to IPFS and then store the CID in a smart contract:
+// This command line tool:
+// 1. Takes a local file as an argument
+// 2. Uploads the file to the IPFS network
+// 3. Stores the CID in a smart contract.
+//
+// Tested with: IPFS-0.10.0, ganache-2.13.2, ganache-cli-6.12.2
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
@@ -17,7 +22,7 @@ async fn main() {
         [path] => {
             let cid = upload_to_ipfs(std::path::Path::new(path))
                 .await
-                .expect("failed to upload");
+                .expect(&format!("failed to upload file: {}", path));
             store_cid_in_contract(cid)
                 .await
                 .expect("Failed to store CID in smart contract");
@@ -29,9 +34,10 @@ async fn main() {
     }
 }
 
+// Open a file and send the contents to IPFS, returning the content ID.
 async fn upload_to_ipfs(path: &std::path::Path) -> Result<String> {
     let client = IpfsClient::default();
-    let file = File::open(path)?;
+    let file = std::fs::File::open(path)?;
 
     Ok(client.add(file).await?.hash)
 }
@@ -46,6 +52,8 @@ abigen!(
     ]"#,
 );
 
+// Spawn a ganache instance and add a content identifier string to
+// a smart contract.
 async fn store_cid_in_contract(cid: String) -> Result<()> {
     // the directory we use is root-dir
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
