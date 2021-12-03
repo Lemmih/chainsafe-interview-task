@@ -1,0 +1,17 @@
+[package]
+name    = "chainsafe-interview-task"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ipfs-api-backend-hyper = "0.2"
+ipfs-api-prelude       = { version = "0.2", features = ["with-builder"] }
+tokio                  = { version = "1", features = ["full"] }
+tracing-subscriber     = { version = "0.3.3", features = ["fmt"] }
+anyhow                 = "*"
+ethers                 = "*"
+ethers-solc            = "*"
+serde                  = "*"
+serde_json             = "*"
